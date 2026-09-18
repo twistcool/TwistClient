@@ -58,7 +58,7 @@ namespace TwistClient
                 if (!isVersionInstalled)
                 {
                     if (playButton != null) playButton.Content = "DOWNLOADING...";
-                    if (STATUS_TEXT != null) STATUS_TEXT.Text = "Initializing asset streams: 0%";
+                    if (STATUS_TEXT != null) STATUS_TEXT.Text = "Connecting to Mojang Content Delivery Networks...";
 
                     launcher.FileProgressChanged += (obj, args) =>
                     {
@@ -71,16 +71,19 @@ namespace TwistClient
                         {
                             if (STATUS_TEXT != null)
                             {
-                                STATUS_TEXT.Text = $"Downloading Client: {percentage:0}% [{progressed}/{total}]";
+                                STATUS_TEXT.Text = $"Streaming Engine Packs: {percentage:0}% [{progressed}/{total}]";
                             }
                         });
                     };
 
-                    await _minecraftService.InstallVersionAsync(baseVersion);
+                    await Task.Run(async () =>
+                    {
+                        await launcher.InstallAsync(baseVersion);
+                    });
 
                     if (!baseVersion.Contains("1.8") && !baseVersion.Contains("1.12"))
                     {
-                        Dispatcher.Invoke(() => { if (STATUS_TEXT != null) STATUS_TEXT.Text = "Injecting Fabric Performance Engine..."; });
+                        Dispatcher.Invoke(() => { if (STATUS_TEXT != null) STATUS_TEXT.Text = "Injecting Clean Fabric Core Layers..."; });
                         launchVersionName = await _fabricService.InstallFabricAsync(baseVersion);
 
                         Dispatcher.Invoke(() => { if (STATUS_TEXT != null) STATUS_TEXT.Text = "Downloading Sodium Graphics Engine..."; });
@@ -112,9 +115,7 @@ namespace TwistClient
                             foreach (var dir in subDirs)
                             {
                                 string folderName = Path.GetFileName(dir);
-
-                                // FIXED: Validated lowercase directory tracking context to read local installations perfectly!
-                                if (folderName.Contains("fabric-loader") && folderName.Contains(baseVersion))
+                                if (folderName.StartsWith("fabric-loader-") && folderName.Contains(baseVersion))
                                 {
                                     launchVersionName = folderName;
                                     break;
@@ -162,25 +163,74 @@ namespace TwistClient
 
                 var process = await Task.Run(async () =>
                 {
-                    var compiledJvmArgs = new System.Collections.Generic.List<MArgument>();
-                    foreach (string argText in highPerformanceArgs)
-                    {
-                        compiledJvmArgs.Add(new MArgument(argText));
-                    }
+                var compiledJvmArgs = new System.Collections.Generic.List<MArgument>();
+                foreach (string argText in highPerformanceArgs)
+                {
+                    compiledJvmArgs.Add(new MArgument(argText));
+                }
 
-                    var launchOption = new MLaunchOption
+                Dispatcher.Invoke(() => { if (STATUS_TEXT != null) STATUS_TEXT.Text = "Routing Java Performance Environments..."; });
+
+                string targetJavaExecutable = "java";
+
+                string tlauncherRuntimePath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    ".minecraft", "runtime"
+                );
+
+                if (Directory.Exists(tlauncherRuntimePath))
+                {
+                    if (!baseVersion.Contains("1.8") && !baseVersion.Contains("1.12"))
                     {
-                        Session = CmlLib.Core.Auth.MSession.CreateOfflineSession(username),
-                        MaximumRamMb = calculatedRamAllocation,
-                        ExtraJvmArguments = compiledJvmArgs,
-                        JavaPath = "java"
-                    };
+                        var javaExecutables = Directory.GetFiles(tlauncherRuntimePath, "javaw.exe", SearchOption.AllDirectories);
+                        foreach (var path in javaExecutables)
+                        {
+                            if (path.Contains("java-render") || path.Contains("alpha") || path.Contains("gamma") || path.Contains("delta") || !path.Contains("jre8"))
+                            {
+                                targetJavaExecutable = path;
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        var javaExecutables = Directory.GetFiles(tlauncherRuntimePath, "javaw.exe", SearchOption.AllDirectories);
+                        foreach (var path in javaExecutables)
+                        {
+                            if (path.Contains("jre8") || path.Contains("legacy"))
+                            {
+                                targetJavaExecutable = path;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                var launchOption = new MLaunchOption
+                {
+                    Session = CmlLib.Core.Auth.MSession.CreateOfflineSession(username),
+                    MaximumRamMb = calculatedRamAllocation,
+                    ExtraJvmArguments = compiledJvmArgs,
+                    JavaPath = targetJavaExecutable
+                };
 
                     return await launcher.BuildProcessAsync(launchVersionName, launchOption);
                 });
 
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.CreateNoWindow = true;
+
                 this.WindowState = WindowState.Minimized;
-                process.Start();
+
+                try
+                {
+                    process.Start();
+                }
+                catch (Exception processEx)
+                {
+                    this.WindowState = WindowState.Normal;
+                    MessageBox.Show($"OS Process Initiation Exception: {processEx.Message}", "Windows Subsystem Block");
+                }
             }
             catch (Exception ex)
             {
@@ -227,7 +277,6 @@ namespace TwistClient
             }
         }
 
-        // 🛠️ MOVEMENT & STATE MANAGERS: Links custom title bar button clicks with zero duplication errors
         private void TitleBar_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             if (e.ButtonState == System.Windows.Input.MouseButtonState.Pressed)
@@ -245,5 +294,3 @@ namespace TwistClient
         }
     }
 }
-
-

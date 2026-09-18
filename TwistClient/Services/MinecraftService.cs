@@ -12,7 +12,11 @@ namespace TwistClient.Services
 
         public MinecraftService()
         {
-            MinecraftPath = new MinecraftPath();
+            string customPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                ".twistclient"
+            );
+            MinecraftPath = new MinecraftPath(customPath);
         }
 
         public MinecraftLauncher CreateLauncher()
@@ -34,7 +38,6 @@ namespace TwistClient.Services
                 version,
                 $"{version}.jar"
             );
-
             return File.Exists(jarPath);
         }
 
@@ -50,6 +53,8 @@ namespace TwistClient.Services
                 if (File.Exists(targetJarPath)) return;
 
                 using var httpClient = new HttpClient();
+                httpClient.DefaultRequestHeaders.Add("User-Agent", "TwistClient-Engine/1.0");
+
                 byte[] fileBytes = await httpClient.GetByteArrayAsync(downloadUrl);
                 await File.WriteAllBytesAsync(targetJarPath, fileBytes);
 

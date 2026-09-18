@@ -1,5 +1,6 @@
 ﻿using CmlLib.Core;
 using CmlLib.Core.ModLoaders.FabricMC;
+using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -17,26 +18,36 @@ namespace TwistClient.Services
         public async Task<string> InstallFabricAsync(string minecraftVersion)
         {
             using var httpClient = new HttpClient();
-
             var installer = new FabricInstaller(httpClient);
 
-            // FIXED FOR V4: Reverted back to the official CmlLib method signature '.Install'
-            return await installer.Install(
+            // 🚀 FORCE ISOLATION MATRIX: Download a fresh profile completely separate from TLauncher
+            await installer.Install(
                 minecraftVersion,
                 _minecraftService.MinecraftPath
             );
-        }
 
-        // Dynamically maps out the official Fabric runtime profile identity names
-        public string GetFabricVersion(string minecraftVersion)
-        {
-            if (string.IsNullOrWhiteSpace(minecraftVersion) || minecraftVersion.Contains("1.8") || minecraftVersion.Contains("1.12"))
+            // Look inside the versions folder and find what folder CmlLib just built
+            string versionsDir = Path.Combine(_minecraftService.MinecraftPath.BasePath, "versions");
+            if (Directory.Exists(versionsDir))
             {
-                return minecraftVersion; // Legacy builds run straight on optimized native OptiFine modules
+                var subDirs = Directory.GetDirectories(versionsDir);
+                foreach (var dir in subDirs)
+                {
+                    string folderName = Path.GetFileName(dir);
+                    // Match the freshly generated official fabric installer naming structure
+                    if (folderName.StartsWith("fabric-loader-") && folderName.Contains(minecraftVersion))
+                    {
+                        return folderName;
+                    }
+                }
             }
 
-            // Modern formats match standard layout directory string definitions: fabric-loader-{loader}-{game}
             return $"fabric-loader-{minecraftVersion}";
+        }
+
+        public string GetFabricVersion(string minecraftVersion)
+        {
+            return minecraftVersion;
         }
     }
 }
