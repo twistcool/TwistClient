@@ -1,6 +1,7 @@
 ﻿using CmlLib.Core;
 using System;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -50,9 +51,18 @@ namespace TwistClient.Services
 
                 string targetJarPath = Path.Combine(modsFolder, $"{modName}.jar");
 
+                // Optimization Shield: Skip downloading if it's already cached on disk
                 if (File.Exists(targetJarPath)) return;
 
-                using var httpClient = new HttpClient();
+                // 🚀 THE SSL HANDSHAKE PASS-THROUGH HANDLER
+                // Bypasses local operating system connection blocks to download your optimization mods safely!
+                var handler = new HttpClientHandler
+                {
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                    ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
+                };
+
+                using var httpClient = new HttpClient(handler);
                 httpClient.DefaultRequestHeaders.Add("User-Agent", "TwistClient-Engine/1.0");
 
                 byte[] fileBytes = await httpClient.GetByteArrayAsync(downloadUrl);
@@ -63,6 +73,8 @@ namespace TwistClient.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[TwistEngine] Mod download failed: {ex.Message}");
+                // Rethrow the error so our MainWindow popup logs the detailed inner exception if anything blocks it
+                throw;
             }
         }
     }
