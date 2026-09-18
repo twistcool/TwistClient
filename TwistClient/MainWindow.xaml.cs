@@ -115,7 +115,7 @@ namespace TwistClient
                             foreach (var dir in subDirs)
                             {
                                 string folderName = Path.GetFileName(dir);
-                                if (folderName.StartsWith("fabric-loader") && folderName.Contains(baseVersion))
+                                if (folderName.StartsWith("fabric-loader-") && folderName.Contains(baseVersion))
                                 {
                                     launchVersionName = folderName;
                                     break;
@@ -128,11 +128,7 @@ namespace TwistClient
                 if (playButton != null) playButton.Content = "LAUNCHING...";
                 if (STATUS_TEXT != null) STATUS_TEXT.Text = "Starting game client...";
 
-                // 🚀 RE-ENGINEERED JAVA 25 ARGS MATRIX
-                // Strips out obsolete properties to match modern low-latency garbage collections perfectly!
-                // 🚀 STABLE JAVA 25 ARGS PIPELINE
-                // Erases conflicting legacy memory tuning flags to let Java 25 boot up instantly!
-                              // 🚀 FIXED: Injected the exact official Fabric Loader bypass property token name
+                // Streamlined execution arguments ensure perfect execution across all Java platforms
                 string[] highPerformanceArgs = new string[]
                 {
                     "-Dnet.minecraft.client.main.Main=true",
@@ -140,14 +136,8 @@ namespace TwistClient
                     $"-Dtwist.client.profile={baseVersion}",
                     "-Dtwist.cosmetics.capes=true",
                     "-Dtwist.hud.keystrokes=true",
-                    
-                    // 🏎️ THE COMPATIBILITY ENGINE CURE: Correct spelling to force Fabric to accept Java 25!
                     "-Dfabric.skipJavaVersionCheck=true"
                 };
-
-
-
-
 
                 long totalPhysicalMemoryBytes = (long)GC.GetGCMemoryInfo().TotalAvailableMemoryBytes;
                 int totalMemoryMb = (int)(totalPhysicalMemoryBytes / (1024 * 1024));
@@ -168,51 +158,24 @@ namespace TwistClient
                         compiledJvmArgs.Add(new MArgument(argText));
                     }
 
-                    Dispatcher.Invoke(() => { if (STATUS_TEXT != null) STATUS_TEXT.Text = "Routing Clean System Java Environment..."; });
+                    Dispatcher.Invoke(() => { if (STATUS_TEXT != null) STATUS_TEXT.Text = "Securing Isolated Java Environments..."; });
 
-                    // 🚀 THE ULTIMATE JAVA PATH ANCHOR
-                    // Hardcodes the execution pointer to a pristine, verified system-wide javaw binary
-                    string targetJavaPath = "java";
-
-                    // Scan your standard Program Files to grab a clean, dedicated 64-bit Java executable if it exists
-                    string programFilesJava = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Java");
-                    if (Directory.Exists(programFilesJava))
-                    {
-                        var javaDirs = Directory.GetDirectories(programFilesJava);
-                        foreach (var javaDir in javaDirs)
-                        {
-                            string candidate = Path.Combine(javaDir, "bin", "javaw.exe");
-                            if (File.Exists(candidate))
-                            {
-                                targetJavaPath = candidate; // Lock onto the pristine global installation!
-                                break;
-                            }
-                        }
-                    }
-
+                    // Leaving JavaPath completely blank tells CmlLib v4 to automatically download 
+                    // a clean, version-matched portable Java runtime straight from Mojang into the local directory,
+                    // bypassing whatever Java version the player has globally installed on their PC.
                     var launchOption = new MLaunchOption
                     {
                         Session = CmlLib.Core.Auth.MSession.CreateOfflineSession(username),
                         MaximumRamMb = calculatedRamAllocation,
                         ExtraJvmArguments = compiledJvmArgs,
-
-                        // FORCE OVERRIDE: Tells CmlLib to use our verified system binary path instead of the broken runtime folders!
-                        JavaPath = targetJavaPath,
                         GameLauncherName = "TwistEngine"
                     };
 
                     return await launcher.BuildProcessAsync(launchVersionName, launchOption);
                 });
-                ;
-
-
 
                 process.StartInfo.UseShellExecute = false;
                 process.StartInfo.CreateNoWindow = true;
-
-                // 🔍 THE TRACE MATRIX: Snatches the exact command string built by CmlLib and dumps it to a text file
-                string exactLaunchCommand = $"{process.StartInfo.FileName} {process.StartInfo.Arguments}";
-                File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "twist_launch_command.txt"), exactLaunchCommand);
 
                 this.WindowState = WindowState.Minimized;
 
@@ -220,7 +183,6 @@ namespace TwistClient
                 {
                     process.Start();
                 }
-
                 catch (Exception processEx)
                 {
                     this.WindowState = WindowState.Normal;

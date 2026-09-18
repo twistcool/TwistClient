@@ -13,6 +13,7 @@ namespace TwistClient.Services
 
         public MinecraftService()
         {
+            // Standardize files directly inside a custom sandbox to isolate them from TLauncher entries
             string customPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 ".twistclient"
@@ -51,11 +52,9 @@ namespace TwistClient.Services
 
                 string targetJarPath = Path.Combine(modsFolder, $"{modName}.jar");
 
-                // Optimization Shield: Skip downloading if it's already cached on disk
                 if (File.Exists(targetJarPath)) return;
 
-                // 🚀 THE SSL HANDSHAKE PASS-THROUGH HANDLER
-                // Bypasses local operating system connection blocks to download your optimization mods safely!
+                // Pass-through handler prevents local network handshakes from blocking mod binary acquisitions
                 var handler = new HttpClientHandler
                 {
                     AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
@@ -73,7 +72,6 @@ namespace TwistClient.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[TwistEngine] Mod download failed: {ex.Message}");
-                // Rethrow the error so our MainWindow popup logs the detailed inner exception if anything blocks it
                 throw;
             }
         }
