@@ -38,26 +38,19 @@ namespace TwistClient.Services
             return File.Exists(jarPath);
         }
 
-        // 🛠️ THE LUNAR KILLER: Automated High-Speed Mod Downloader
-        // Downloads any mod from a URL and injects it straight into AppData/.minecraft/mods
         public async Task DownloadModAsync(string modName, string downloadUrl)
         {
             try
             {
                 string modsFolder = Path.Combine(MinecraftPath.BasePath, "mods");
-                Directory.CreateDirectory(modsFolder); // Automatically build the folder if it doesn't exist
+                Directory.CreateDirectory(modsFolder);
 
                 string targetJarPath = Path.Combine(modsFolder, $"{modName}.jar");
 
-                // Smart Check: If the mod is already downloaded, skip it to launch instantly!
                 if (File.Exists(targetJarPath)) return;
 
                 using var httpClient = new HttpClient();
-
-                // Fetch the mod file from the remote download link
                 byte[] fileBytes = await httpClient.GetByteArrayAsync(downloadUrl);
-
-                // Write it safely to the mods folder
                 await File.WriteAllBytesAsync(targetJarPath, fileBytes);
 
                 System.Diagnostics.Debug.WriteLine($"[TwistEngine] Mod injected successfully: {modName}");
