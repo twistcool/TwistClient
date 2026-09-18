@@ -38,34 +38,33 @@ namespace TwistClient.Services
             return File.Exists(jarPath);
         }
 
-        // 🛠️ THE LUNAR KILLER: Automated Parallel Mod Downloader Component
-        // Streams optimization binaries directly from network servers straight into the player's active directory
+        // 🛠️ THE LUNAR KILLER: Automated High-Speed Mod Downloader
+        // Downloads any mod from a URL and injects it straight into AppData/.minecraft/mods
         public async Task DownloadModAsync(string modName, string downloadUrl)
         {
             try
             {
                 string modsFolder = Path.Combine(MinecraftPath.BasePath, "mods");
-                Directory.CreateDirectory(modsFolder); // Ensure the local directory path exists
+                Directory.CreateDirectory(modsFolder); // Automatically build the folder if it doesn't exist
 
                 string targetJarPath = Path.Combine(modsFolder, $"{modName}.jar");
 
-                // Optimization Shield: If the mod binary is already sitting on the hard drive, skip downloading to boot instantly!
+                // Smart Check: If the mod is already downloaded, skip it to launch instantly!
                 if (File.Exists(targetJarPath)) return;
 
                 using var httpClient = new HttpClient();
 
-                // Fetch the binary stream from remote repo nodes
+                // Fetch the mod file from the remote download link
                 byte[] fileBytes = await httpClient.GetByteArrayAsync(downloadUrl);
 
-                // Write the raw jar file safely onto the local operating system path
+                // Write it safely to the mods folder
                 await File.WriteAllBytesAsync(targetJarPath, fileBytes);
 
-                System.Diagnostics.Debug.WriteLine($"Twist Optimization Mod Injected Successfully: {modName}");
+                System.Diagnostics.Debug.WriteLine($"[TwistEngine] Mod injected successfully: {modName}");
             }
             catch (Exception ex)
             {
-                // Non-breaking fallback tracking log loop
-                System.Diagnostics.Debug.WriteLine($"Mod streaming bypass vector exception: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[TwistEngine] Mod download failed: {ex.Message}");
             }
         }
     }
